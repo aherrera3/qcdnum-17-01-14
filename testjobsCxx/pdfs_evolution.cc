@@ -1,3 +1,12 @@
+/*
+Script for the DGLAP evolution of the proton PDFs using qcdnum software.
+
+Initial PDFs are given at the value q = 2.56 GeV^2.
+
+Proton PDFs parametrizations taken from: Bonvini, M., & Giuli, F. (2019). A new simple PDF parametrization: improved description
+																										 of the HERA data. The European Physical Journal Plus, 134(10), 531.
+*/
+
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -5,13 +14,13 @@
 #include "QCDNUM/QCDNUM.h"
 using namespace std;
 
-// Funciones partonicas:
+// x Parton Distribution functions:
 //----------------------------------------------------------------------
 double xupv(double x)
 {
-  double au = 10.19304899633023;
-  double bu = 0.76, cu = 4.6, eu = 2.6, fu = 0.35, gu = 0.049;
-  double pd = au * pow(x, bu) * pow((1 - x), cu) * (1 + eu * pow(x, 2) + fu * log(x) + gu * pow(log(x), 2));
+  double A_uv = 10.19304899633023;
+  double B_uv = 0.76, C_uv = 4.6, E_uv = 2.6, F_uv = 0.35, G_uv = 0.049;
+  double pd = A_uv * pow(x, B_uv) * pow((1 - x), C_uv) * (1 + E_uv * pow(x, 2) + F_uv * log(x) + G_uv * pow(log(x), 2));
   return pd;
 }
 //----------------------------------------------------------------------
@@ -24,22 +33,22 @@ double xdnv(double x)
 //----------------------------------------------------------------------
 double xglu(double x)
 {
-  double A_g = -0.927244357490440, B_g = -0.52, C_g = 4.5, F_g = 0.217, G_g = 0.0112;
+  double A_g = 0.9304776592815227, B_g = -0.52, C_g = 4.5, F_g = 0.217, G_g = 0.0112;
   double pd = A_g * pow(x, B_g) * pow((1 - x), C_g) * (1 + F_g * log(x) + G_g * pow(log(x), 2));
   return pd;
 }
 //----------------------------------------------------------------------
 double xdbar(double x)
 {
-  double A_dbar = 0.14, B_dbar = -0.33, C_dbar = 24, D_dbar = 28, F_dbar = 0.071;
-  double pd = A_dbar * pow(x, B_dbar) * pow((1 - x), C_dbar) * (1 - D_dbar * x + F_dbar * log(x));
+  double A_dbar = 0.14, B_dbar = -0.33, C_dbar = 24, D_dbar = 38, F_dbar = 0.071;
+  double pd = A_dbar * pow(x, B_dbar) * pow((1 - x), C_dbar) * (1 + D_dbar * x + F_dbar * log(x));
   return pd;
 }
 //----------------------------------------------------------------------
 double xubar(double x)
 {
   double A_ubar = 0.14, B_ubar = -0.33, C_ubar = 11, D_ubar = 18, F_ubar = 0.071;
-  double pd = A_ubar * pow(x, B_ubar) * pow((1 - x), C_ubar) * (1 - D_ubar * x + F_ubar * log(x));
+  double pd = A_ubar * pow(x, B_ubar) * pow((1 - x), C_ubar) * (1 + D_ubar * x + F_ubar * log(x));
   return pd;
 }
 //----------------------------------------------------------------------
@@ -53,7 +62,7 @@ double xsbar(double x)
 
 //----------------------------------------------------------------------
 /*
-** PDFs  xfi(x) a escala inicial iq0. iq0 declarado mas abajo.
+** Function that calls all xPDF(x) at initial scale q0.
 */
 double func(int *ipdf, double *x)
 {
@@ -61,31 +70,31 @@ double func(int *ipdf, double *x)
   double xb = *x;
   double f = 0;
   if (i == 0)
-    f = xglu(xb); // gluon
+    f = xglu(xb);   // gluon
   if (i == 1)
-    f = xdnv(xb); // valence down
+    f = xdnv(xb);   // valence down
   if (i == 2)
-    f = xupv(xb); // valence up
+    f = xupv(xb);   // valence up
   if (i == 3)
-    f = 0; // valence strange
+    f = 0;          // valence strange
   if (i == 4)
-    f = xdbar(xb); // Sea quarks:
+    f = xdbar(xb);  // Sea quarks:
   if (i == 5)
     f = xubar(xb);
   if (i == 6)
     f = xsbar(xb);
   if (i == 7)
-    f = 0; // charm de valencia?
+    f = 0;        // charm
   if (i == 8)
-    f = 0; // anti-charm
+    f = 0;        // anti-charm
   if (i == 9)
-    f = 0; // bottom
+    f = 0;        // bottom
   if (i == 10)
-    f = 0; // anti-bottom
+    f = 0;        // anti-bottom
   if (i == 11)
-    f = 0; // top
+    f = 0;        // top
   if (i == 12)
-    f = 0; // anti-top
+    f = 0;        // anti-top
   return f;
 }
 
@@ -96,15 +105,18 @@ int main()
   int dataset_type = 1, iord = 3, nfin = 0;
 
   // x, q, and quarks flavour arrays
-  double x[] = {1.0e-5, 2.0e-5, 3.0e-5, 5.0e-5, 6.0e-5, 7.0e-5, 8.0e-5, 9.0e-5, 
-                1.0e-4, 2.0e-4, 3.0e-4, 5.0e-4, 6.0e-4, 7.0e-4, 8.0e-4, 9.0e-4, 
-                1.0e-3, 2.0e-3, 3.0e-3, 5.0e-3, 6.0e-3, 7.0e-3, 8.0e-3, 9.0e-3,
-                1.0e-2, 2.0e-2, 3.0e-2, 5.0e-2, 6.0e-2, 7.0e-2, 8.0e-2, 9.0e-2,
-                1.0e-1, 1.5e-1, 2.0e-1, 3.0e-1, 4.0e-1, 5.5e-1, 6.0e-1, 7.0e-1, 9.0e-1};
+  double x[100];
+  double xmi = 5.2427e-4, xma = 1;
+  double deltax = (xma - xmi)/(100-1);
+  x[0] = xmi;
+  for (int i=1; i<100; i++){
+    x[i] = x[i-1] + deltax;
+  }
 
-  double q[] = {2.0e0, 2.7e0, 3.6e0, 5.0e0, 7.0e0, 1.0e1, 1.4e1,
+  // q0 = 2.56 GeV
+  double q[] = {2.56, 10}; /*{2.0e0, 2.7e0, 3.6e0, 5.0e0, 7.0e0, 1.0e1, 1.4e1,
                 2.0e1, 3.0e1, 5.0e1, 7.0e1, 1.0e2, 2.0e2, 5.0e2, 1.0e3,
-                3.0e3, 1.0e4, 4.0e4, 2.0e5, 1.0e6};
+                3.0e3, 1.0e4, 4.0e4, 2.0e5, 1.0e6};*/
 
   // Quarks flavour composition: is an input for evolfg:
   double pdf_flavour[] =
@@ -170,39 +182,44 @@ int main()
   int iqb = QCDNUM::iqfrmq(q2b);       // bottom threshold
   QCDNUM::setcbt(nfin, iqc, iqb, 999); // thresholds in the VFNS
 
-  // grid index of the of the starting scale qmin (Requiered as a parameter of the evolfg function)
+  // grid index the starting scale qmin (Requiered as a parameter of the evolfg function)
   int iq0  = QCDNUM::iqfrmq(qmin);     
   
+  //cout << "pdfs antes de evolucionar: " << qmin << pdf[0] << " " << pdf[1]  << " " << pdf[2]  << " " << pdf[3] << endl;  // son todos ceros
+  
   //evolve all pdf's.
-  QCDNUM::evolfg(dataset_type,func,pdf_flavour,iq0,eps);       //TODO: Enteder esta variable eps.
+  QCDNUM::evolfg(dataset_type,func,pdf_flavour,iq0,eps);       //TODO: Enteder esta variable eps.    
+  //cout << "pdfs despues de evolucionar: " << qmin << pdf[0] << " " << pdf[1]  << " " << pdf[2]  << " " << pdf[3] << endl; 
 
 
-  cout << "     mu2       x           uv         dv        ubar        dvar         gl" << endl;
+  //cout << "     mu2       x           uv         dv        ubar        dvar         gl" << endl;
   cout << setprecision(4) << scientific;
 
+
   // loop to interpolate all pdf's at different scales of q
-  for(int iq = 0; iq < nq; iq = iq+1) 
+  for(int iq = 0; iq < nq; iq++) 
   {
     double q_value = q[iq]; 
-    cout << endl;
 
     // to save the output in a file saved in the output file
     ofstream myfile;
     myfile.open("/opt/qcdnum-17-01-14/output/pruebaCxx_q_" + to_string(q_value) +  ".csv");
     myfile << "x uv dv ubar dvar gl" << endl;
 
-    for(int ix = 0; ix < nx; ix = ix+1) {
+    for(int ix = 0; ix < nx; ix++) {
       double x_value  = x[ix];
-      double uv = QCDNUM::fvalxq(dataset_type,2,x_value,q_value,ichk);     //TODO: aqui uso sumfxq, fvalxq o allfxq??
-      double dv = QCDNUM::fvalxq(dataset_type,1,x_value,q_value,ichk);
-      double ubar = QCDNUM::fvalxq(dataset_type,-2,x_value,q_value,ichk);
-      double dbar = QCDNUM::fvalxq(dataset_type,-1,x_value,q_value,ichk);
-      double gl = QCDNUM::fvalxq(dataset_type,0,x_value,q_value,ichk);
-      cout << q_value << " " << x_value << " " << uv << " " << dv << " " << ubar << " " << dbar << " " << gl << endl;
+      double uv = QCDNUM::fvalxq(dataset_type,2,x_value,q_value,ichk);     // the indexes are according the convention given in page 53 of the qcdnum manual
+      double dv = QCDNUM::fvalxq(dataset_type,1,x_value,q_value,ichk);     
+      double ubar = QCDNUM::fvalxq(dataset_type,-2,x_value,q_value,ichk);  
+      double dbar = QCDNUM::fvalxq(dataset_type,-1,x_value,q_value,ichk);  
+      double gl = QCDNUM::fvalxq(dataset_type,0,x_value,q_value,ichk);    
       myfile << x_value << " " << uv << " " << dv << " " << ubar << " " << dbar << " " << gl << endl;
+      //cout << q_value << " " << x_value << " " << uv << " " << dv << " " << ubar << " " << dbar << " " << gl << endl;
     } 
-    myfile.close();
+    //myfile.close();
+
   } 
+  
 
   cout << endl;
 
