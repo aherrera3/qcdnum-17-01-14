@@ -100,11 +100,13 @@ double func(int *ipdf, double *x)
 
 int main()
 {
+  // to delete the old .csv files
+  system("rm /opt/qcdnum-17-01-14/output/*.csv");
 
   // unpolized dataset, NNLO, VFNS
-  int dataset_type = 1, iord = 3, nfin = 0;
+  int dataset_type = 1, iord = 3, nfix = 0;
 
-  // x, q, and quarks flavour arrays
+  // x and q arrays
   double x[100];
   double xmi = 5.2427e-4, xma = 1;
   double deltax = (xma - xmi)/(100-1);
@@ -112,94 +114,96 @@ int main()
   for (int i=1; i<100; i++){
     x[i] = x[i-1] + deltax;
   }
+  
+  // double x[] = {9.9e-7, 0.01, 0.1, 0.4, 0.7};
+  double q[] = {0.99999999999,  2.05e8};
 
   // q0 = 2.56 GeV
-  double q[] = {2.56, 10}; /*{2.0e0, 2.7e0, 3.6e0, 5.0e0, 7.0e0, 1.0e1, 1.4e1,
+  /* double q[] = {7,10};   = {2.0e0, 2.7e0, 3.6e0, 5.0e0, 7.0e0, 1.0e1, 1.4e1,
                 2.0e1, 3.0e1, 5.0e1, 7.0e1, 1.0e2, 2.0e2, 5.0e2, 1.0e3,
-                3.0e3, 1.0e4, 4.0e4, 2.0e5, 1.0e6};*/
+                3.0e3, 1.0e4, 4.0e4, 2.0e5, 1.0e6}; */
+
+  // size of x and y arrays, and min(x)
+  int nx = size(x), nq = size(q);
+  double q0 = q[0], qmax = q[nq - 1];    // q0 is the starting energy scale
 
   // Quarks flavour composition: is an input for evolfg:
   double pdf_flavour[] =
       // tb  bb  cb  sb  ub  db   g   d   u   s   c   b   t
-      {0., 0., 0., 0., 0., -1., 0., 1., 0., 0., 0., 0., 0., // 1=dval
-       0., 0., 0., 0., -1., 0., 0., 0., 1., 0., 0., 0., 0., // 2=uval
-       0., 0., 0., -1., 0., 0., 0., 0., 0., 1., 0., 0., 0., // 3=sval
-       0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0.,  // 4=dbar
-       0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0.,  // 5=ubar
-       0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0.,  // 6=sbar
-       0., 0., -1., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0., // 7=cval
-       0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,  // 8=cbar
-       0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,  // 9=zero
-       0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,  // 10=zero
-       0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,  // 11=zero
-       0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.}; // 12=zero
+        {0., 0., 0., 0., 0., -1., 0., 1., 0., 0., 0., 0., 0., // 1=dval    // because dv = d - dbar
+        0., 0., 0., 0., -1., 0., 0., 0., 1., 0., 0., 0., 0., // 2=uval
+        0., 0., 0., -1., 0., 0., 0., 0., 0., 1., 0., 0., 0., // 3=sval
+        0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0.,  // 4=dbar
+        0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0.,  // 5=ubar
+        0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0.,  // 6=sbar
+        0., 0., -1., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0., // 7=cval
+        0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,  // 8=cbar
+        0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,  // 9=zero
+        0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,  // 10=zero
+        0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,  // 11=zero
+        0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.}; // 12=zero
 
-  // size of x and y arrays, and min(x)
-  int nx = size(x), nq = size(q);
-  double qmin = q[0], qmax = q[nq - 1];    //qmin is the starting scale
-
-  //----------------- variables for the qcinit function ------------------
+  // variables for the qcinit function
   int lun = 6;
   string outfile = " "; // if lun=6, qcdnum messages appear in the standard output
 
-  //----------  variables the gxmake function (x-grid parameters) -----------
-  double xmin[] = {x[0]};
-  // nxin: number of grid points. iosp: order for spline interpolation (3=quadratic)
-  int iwt[] = {1}, n = 1, nxin = 100, iosp = 3; // TODO: entender iwt y n.
-  int nxout;
+  // variables for the gxmake function (x-grid parameters) 
+  //double xmin[] = x;
+  int iwt[] = {1,  2,  4,  8, 16};            // x grid weigths
+  int n = size(iwt);                      // = size(xmin)             
+  int nxout;                      
+  int nxin = 200, iosp = 2;           // nxin: number of x grid points. 
+                                      // iosp: order for spline interpolation (2=linear, 3=quadratic). 
 
-  //----------  variables the gqmake function (q-grid parameters) -----------
-  // qarr: lower and upper end of the q grid
-  double qarr[] = {qmin, qmax}, wgt[] = {1e0, 1e0}; // TODO: enteder wgt
-  //  number of q grid points and out grid points
-  int nqin = 60, nqout;
+  // variables for the gqmake function (q-grid parameters)
+  double qarr[] = {q0, qmax};
+  double wgt[] = {1., 1.};   
+  int nqarr = size(qarr);            // = size(wgt)      
+  int nqin = 120, nqout;             //  number of q in and out grid points
 
-  //----------  variables the fillwt function -----------  //TODO: entender esto de los pesos
-  int id1, id2, nwds;
+  // variables for the fillwt function 
+  int idmin, idmax, nwds;
 
-  //----------  variables for iqfrmq functions -----------
-  double q2c = 3, q2b = 25; // thresholds, mu20  //TODO: entender esto! los thresholds
+  // variables for the setalf() function.
+  double as0 = 0.118, r20 = 2.0, eps;    // as0:starting value of strong interaction constant and r20: starting value of renormalization scale
 
-  // as0: constante de interaccion fuerte y r20: escala de renormalizacion
-  double as0 = 0.364, r20 = 2.0, eps; 
+  // threshold for the heavy quarks (charm, bottom and top quarks respectively).
+  double q2ch = 1.43, q2bt = 4.50, q2tp = 173.0;   
 
   // pdf array declaration: In this array the pdfs will be stored.
   double pdf[13];
 
-  // for select this type of error in interpolation functions
+  // type of error in the interpolation functions
   int ichk = 1;
 
   //----------------- QCDNUM FUNCTIONS ------------------
   QCDNUM::qcinit(lun, outfile);
-  QCDNUM::gxmake(xmin, iwt, n, nxin, nxout, iosp);
-  QCDNUM::gqmake(qarr, wgt, size(qarr), nqin, nqout);
-  QCDNUM::fillwt(dataset_type, id1, id2, nwds);
+  QCDNUM::gxmake(x, iwt, n, nxin, nxout, iosp);     // x = xmin
+  QCDNUM::gqmake(qarr, wgt, nqarr, nqin, nqout);
+  QCDNUM::fillwt(dataset_type, idmin, idmax, nwds);
   QCDNUM::setord(iord);
   QCDNUM::setalf(as0, r20);
 
-  // TODO: enteder las siguientes funciones
-  int iqc = QCDNUM::iqfrmq(q2c);       // charm threshold
-  int iqb = QCDNUM::iqfrmq(q2b);       // bottom threshold
-  QCDNUM::setcbt(nfin, iqc, iqb, 999); // thresholds in the VFNS
+  // grid q^2 indexes of the heavy quark thresholds
+  int iqch = QCDNUM::iqfrmq(q2ch);       
+  int iqbt = QCDNUM::iqfrmq(q2bt);       
+  int iqtp = QCDNUM::iqfrmq(q2tp);
+  // set the thresholds in the VFNS (nfix = 0)
+  QCDNUM::setcbt(nfix, iqch, iqbt, iqtp); 
 
-  // grid index the starting scale qmin (Requiered as a parameter of the evolfg function)
-  int iq0  = QCDNUM::iqfrmq(qmin);     
-  
-  //cout << "pdfs antes de evolucionar: " << qmin << pdf[0] << " " << pdf[1]  << " " << pdf[2]  << " " << pdf[3] << endl;  // son todos ceros
-  
+  // grid q^2 index of the starting scale.
+  int iq0  = QCDNUM::iqfrmq(q0);     
   //evolve all pdf's.
   QCDNUM::evolfg(dataset_type,func,pdf_flavour,iq0,eps);       //TODO: Enteder esta variable eps.    
-  //cout << "pdfs despues de evolucionar: " << qmin << pdf[0] << " " << pdf[1]  << " " << pdf[2]  << " " << pdf[3] << endl; 
-
 
   //cout << "     mu2       x           uv         dv        ubar        dvar         gl" << endl;
-  cout << setprecision(4) << scientific;
+  cout << setprecision(10) << scientific;
 
-
-  // loop to interpolate all pdf's at different scales of q
+  // loop to interpolate all pdf's at different scales of q^2
   for(int iq = 0; iq < nq; iq++) 
   {
     double q_value = q[iq]; 
+    cout << "q_value = " << q_value <<endl;
 
     // to save the output in a file saved in the output file
     ofstream myfile;
@@ -213,18 +217,12 @@ int main()
       double ubar = QCDNUM::fvalxq(dataset_type,-2,x_value,q_value,ichk);  
       double dbar = QCDNUM::fvalxq(dataset_type,-1,x_value,q_value,ichk);  
       double gl = QCDNUM::fvalxq(dataset_type,0,x_value,q_value,ichk);    
+      // the above is the same as QCDNUM::allfxq(dataset_type,x_value,q_value,pdf,0,ichk); and printing : pdf[4] << " " << pdf[5]  << " " << pdf[6]  << " " << pdf[7] << " " << pdf[8]
+      
       myfile << x_value << " " << uv << " " << dv << " " << ubar << " " << dbar << " " << gl << endl;
-      //cout << q_value << " " << x_value << " " << uv << " " << dv << " " << ubar << " " << dbar << " " << gl << endl;
     } 
-    //myfile.close();
-
-  } 
-  
-
-  cout << endl;
-
-    // Returns all flavour-pdf values in one call. Se asigna valor a la variable pdf. Es un array de tamaño 13 de doubles  
-    //QCDNUM::allfxq(dataset_type,x,q_evolution,pdf,0,1);                    
+    myfile.close();
+  }               
 
   return 0;
 }
