@@ -103,20 +103,21 @@ int main()
   // to delete the old .csv files
   system("rm /opt/qcdnum-17-01-14/output/*.csv");
 
-  // unpolized dataset, NNLO, VFNS
-  int dataset_type = 1, iord = 3, nfix = 0;
+  // unpolarized pdfset, NNLO, VFNS
+  int pdfset_type = 1, iord = 3, nfix = 0;
 
   // x and q arrays
-  double x[100];
+  const int n_points = 200;
+  double x[n_points];
   double xmi = 5.2427e-4, xma = 1;
-  double deltax = (xma - xmi)/(100-1);
+  double deltax = (xma - xmi)/(n_points-1);
   x[0] = xmi;
-  for (int i=1; i<100; i++){
+  for (int i=1; i<n_points; i++){
     x[i] = x[i-1] + deltax;
   }
   
   // double x[] = {9.9e-7, 0.01, 0.1, 0.4, 0.7};
-  double q[] = {0.99999999999,  2.05e8};
+  double q2[] = {2.56,  10, 100, 1000, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10};//, 1e11, 1e12};
 
   // q0 = 2.56 GeV
   /* double q[] = {7,10};   = {2.0e0, 2.7e0, 3.6e0, 5.0e0, 7.0e0, 1.0e1, 1.4e1,
@@ -124,8 +125,8 @@ int main()
                 3.0e3, 1.0e4, 4.0e4, 2.0e5, 1.0e6}; */
 
   // size of x and y arrays, and min(x)
-  int nx = size(x), nq = size(q);
-  double q0 = q[0], qmax = q[nq - 1];    // q0 is the starting energy scale
+  int nx = size(x), nq2 = size(q2);
+  double q20 = 0.5, q2max = q2[nq2 - 1];    // initial and final boundaries of q^2 qcdnum grid
 
   // Quarks flavour composition: is an input for evolfg:
   double pdf_flavour[] =
@@ -155,8 +156,8 @@ int main()
   int nxin = 200, iosp = 2;           // nxin: number of x grid points. 
                                       // iosp: order for spline interpolation (2=linear, 3=quadratic). 
 
-  // variables for the gqmake function (q-grid parameters)
-  double qarr[] = {q0, qmax};
+  // variables for the gqmake function (q^2-grid parameters)
+  double qarr[] = {q20, q2max};
   double wgt[] = {1., 1.};   
   int nqarr = size(qarr);            // = size(wgt)      
   int nqin = 120, nqout;             //  number of q in and out grid points
@@ -168,7 +169,7 @@ int main()
   double as0 = 0.118, r20 = 2.0, eps;    // as0:starting value of strong interaction constant and r20: starting value of renormalization scale
 
   // threshold for the heavy quarks (charm, bottom and top quarks respectively).
-  double q2ch = 1.43, q2bt = 4.50, q2tp = 173.0;   
+  double q2ch = 2.13, q2bt = 4.50, q2tp = 173.0;   
 
   // pdf array declaration: In this array the pdfs will be stored.
   double pdf[13];
@@ -178,9 +179,10 @@ int main()
 
   //----------------- QCDNUM FUNCTIONS ------------------
   QCDNUM::qcinit(lun, outfile);
+  //QCDNUM::setval("qmax", 0.1e13);           // TODO: did not work.. set bigger value of max boundary of q^2 grid 
   QCDNUM::gxmake(x, iwt, n, nxin, nxout, iosp);     // x = xmin
   QCDNUM::gqmake(qarr, wgt, nqarr, nqin, nqout);
-  QCDNUM::fillwt(dataset_type, idmin, idmax, nwds);
+  QCDNUM::fillwt(pdfset_type, idmin, idmax, nwds);
   QCDNUM::setord(iord);
   QCDNUM::setalf(as0, r20);
 
@@ -191,33 +193,33 @@ int main()
   // set the thresholds in the VFNS (nfix = 0)
   QCDNUM::setcbt(nfix, iqch, iqbt, iqtp); 
 
-  // grid q^2 index of the starting scale.
-  int iq0  = QCDNUM::iqfrmq(q0);     
+  // q^2 grid index of the starting scale.
+  int iq0  = QCDNUM::iqfrmq(q20);     
   //evolve all pdf's.
-  QCDNUM::evolfg(dataset_type,func,pdf_flavour,iq0,eps);       //TODO: Enteder esta variable eps.    
+  QCDNUM::evolfg(pdfset_type,func,pdf_flavour,iq0,eps);       //TODO: Enteder esta variable eps.    
 
   //cout << "     mu2       x           uv         dv        ubar        dvar         gl" << endl;
-  cout << setprecision(10) << scientific;
+  cout << setprecision(4) << scientific;
 
   // loop to interpolate all pdf's at different scales of q^2
-  for(int iq = 0; iq < nq; iq++) 
+  for(int iq2 = 0; iq2 < nq2; iq2++) 
   {
-    double q_value = q[iq]; 
-    cout << "q_value = " << q_value <<endl;
+    double q2_value = q2[iq2]; 
+    cout << "q2_value = " << q2_value <<endl;
 
     // to save the output in a file saved in the output file
     ofstream myfile;
-    myfile.open("/opt/qcdnum-17-01-14/output/pruebaCxx_q_" + to_string(q_value) +  ".csv");
-    myfile << "x uv dv ubar dvar gl" << endl;
+    myfile.open("/opt/qcdnum-17-01-14/output/pruebaCxx_q_" + to_string(q2_value) +  ".csv");
+    myfile << "x xuv xdv xubar xdbar xgl" << endl;
 
     for(int ix = 0; ix < nx; ix++) {
       double x_value  = x[ix];
-      double uv = QCDNUM::fvalxq(dataset_type,2,x_value,q_value,ichk);     // the indexes are according the convention given in page 53 of the qcdnum manual
-      double dv = QCDNUM::fvalxq(dataset_type,1,x_value,q_value,ichk);     
-      double ubar = QCDNUM::fvalxq(dataset_type,-2,x_value,q_value,ichk);  
-      double dbar = QCDNUM::fvalxq(dataset_type,-1,x_value,q_value,ichk);  
-      double gl = QCDNUM::fvalxq(dataset_type,0,x_value,q_value,ichk);    
-      // the above is the same as QCDNUM::allfxq(dataset_type,x_value,q_value,pdf,0,ichk); and printing : pdf[4] << " " << pdf[5]  << " " << pdf[6]  << " " << pdf[7] << " " << pdf[8]
+      double uv = QCDNUM::fvalxq(pdfset_type,2,x_value,q2_value,ichk);     // the indexes are according the convention given in page 53 of the qcdnum manual
+      double dv = QCDNUM::fvalxq(pdfset_type,1,x_value,q2_value,ichk);     
+      double ubar = QCDNUM::fvalxq(pdfset_type,-2,x_value,q2_value,ichk);  
+      double dbar = QCDNUM::fvalxq(pdfset_type,-1,x_value,q2_value,ichk);  
+      double gl = QCDNUM::fvalxq(pdfset_type,0,x_value,q2_value,ichk);    
+      // the above is the same as QCDNUM::allfxq(pdfset_type,x_value,q_value,pdf,0,ichk); and printing : pdf[4] << " " << pdf[5]  << " " << pdf[6]  << " " << pdf[7] << " " << pdf[8]
       
       myfile << x_value << " " << uv << " " << dv << " " << ubar << " " << dbar << " " << gl << endl;
     } 
