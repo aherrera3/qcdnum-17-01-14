@@ -33,7 +33,7 @@ double xdnv(double x)
 //----------------------------------------------------------------------
 double xglu(double x)
 {
-  double A_g = 0.9304776592815227, B_g = -0.52, C_g = 4.5, F_g = 0.217, G_g = 0.0112;
+  double A_g = 0.872978687751462, B_g = -0.52, C_g = 4.5, F_g = 0.217, G_g = 0.0112;
   double pd = A_g * pow(x, B_g) * pow((1 - x), C_g) * (1 + F_g * log(x) + G_g * pow(log(x), 2));
   return pd;
 }
@@ -116,13 +116,7 @@ int main()
     x[i] = x[i-1] + deltax;
   }
   
-  // double x[] = {9.9e-7, 0.01, 0.1, 0.4, 0.7};
   double q2[] = {2.56,  10, 100, 1000, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10};//, 1e11, 1e12};
-
-  // q0 = 2.56 GeV
-  /* double q[] = {7,10};   = {2.0e0, 2.7e0, 3.6e0, 5.0e0, 7.0e0, 1.0e1, 1.4e1,
-                2.0e1, 3.0e1, 5.0e1, 7.0e1, 1.0e2, 2.0e2, 5.0e2, 1.0e3,
-                3.0e3, 1.0e4, 4.0e4, 2.0e5, 1.0e6}; */
 
   // size of x and y arrays, and min(x)
   int nx = size(x), nq2 = size(q2);
@@ -224,7 +218,7 @@ int main()
       myfile << x_value << " " << uv << " " << dv << " " << ubar << " " << dbar << " " << gl << endl;
     } 
     myfile.close();
-  }               
+  }                
 
   return 0;
 }
