@@ -57,3 +57,8 @@ testjobsCxx/pdfsetsCxx.cc
 testjobsCxx/testhqstfCxx.cc
 testjobsCxx/testzmstfCxx.cc
 testjobsCxx/a.out
+Makefile
+/config.log
+/config.status
+/libtool
+.vscode/

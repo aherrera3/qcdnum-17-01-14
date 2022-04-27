@@ -106,21 +106,37 @@ int main()
   // unpolarized pdfset, NNLO, VFNS
   int pdfset_type = 1, iord = 3, nfix = 0;
 
-  // x and q arrays
+  // Generating x and q arrays logarithmic
   const int n_points = 200;
   double x[n_points];
-  double xmi = 5.2427e-4, xma = 1;
-  double deltax = (xma - xmi)/(n_points-1);
-  x[0] = xmi;
-  for (int i=1; i<n_points; i++){
-    x[i] = x[i-1] + deltax;
+
+  double e_mi = -3, e_ma = 0;
+  double delta_e = (e_ma - e_mi)/(n_points-1);
+  int i = 0;
+  for (double e=e_mi; e<e_ma; e+=delta_e){
+    x[i] = pow(10, e);
+    //cout << x[i] << endl;
+    i++;
   }
   
-  double q2[] = {2.56,  10, 100, 1000, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10};//, 1e11, 1e12};
+  // q^2 array
+  static const double q2i = 0.5, q2f = 11.1, delta_q2 = 0.3;
+  static const int n_q2 =  int((q2f-q2i)/delta_q2 +0.5);
+  cout << "n_q2= " <<  n_q2 << endl;
+  double q2[n_q2];
+
+  for (int i=0; i<n_q2; i++){
+    q2[i] = pow(2.56, 2.0*(q2i+i*delta_q2));
+    //cout << q2[i] << endl;
+  }
+
+  //double q2[] = {2.56, 5, 10, 100, 140, 170, 1e3, 5e3, 7e3,
+  //               1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10,// 1e11, 1e12};
+
 
   // size of x and y arrays, and min(x)
-  int nx = size(x), nq2 = size(q2);
-  double q20 = 0.5, q2max = q2[nq2 - 1];    // initial and final boundaries of q^2 qcdnum grid
+  int nx = size(x);
+  double q20 = 0.5, q2max = q2[n_q2 - 1];    // initial and final boundaries of q^2 qcdnum grid
 
   // Quarks flavour composition: is an input for evolfg:
   double pdf_flavour[] =
@@ -139,12 +155,12 @@ int main()
         0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.}; // 12=zero
 
   // variables for the qcinit function
-  int lun = 6;
+  int lun = -6;
   string outfile = " "; // if lun=6, qcdnum messages appear in the standard output
 
   // variables for the gxmake function (x-grid parameters) 
   //double xmin[] = x;
-  int iwt[] = {1,  2,  4,  8, 16};            // x grid weigths
+  int iwt[] = {1,  1,  1,  1, 1};            // x grid weigths
   int n = size(iwt);                      // = size(xmin)             
   int nxout;                      
   int nxin = 200, iosp = 2;           // nxin: number of x grid points. 
@@ -152,6 +168,7 @@ int main()
 
   // variables for the gqmake function (q^2-grid parameters)
   double qarr[] = {q20, q2max};
+  //cout << q20 << " " << q2max << endl;
   double wgt[] = {1., 1.};   
   int nqarr = size(qarr);            // = size(wgt)      
   int nqin = 120, nqout;             //  number of q in and out grid points
@@ -173,7 +190,7 @@ int main()
 
   //----------------- QCDNUM FUNCTIONS ------------------
   QCDNUM::qcinit(lun, outfile);
-  //QCDNUM::setval("qmax", 0.1e13);           // TODO: did not work.. set bigger value of max boundary of q^2 grid 
+  //QCDNUM::setval("qmax", 1e13);           // TODO: did not work.. set bigger value of max boundary of q^2 grid 
   QCDNUM::gxmake(x, iwt, n, nxin, nxout, iosp);     // x = xmin
   QCDNUM::gqmake(qarr, wgt, nqarr, nqin, nqout);
   QCDNUM::fillwt(pdfset_type, idmin, idmax, nwds);
@@ -192,22 +209,23 @@ int main()
   //evolve all pdf's.
   QCDNUM::evolfg(pdfset_type,func,pdf_flavour,iq0,eps);       //TODO: Enteder esta variable eps.    
 
-  //cout << "     mu2       x           uv         dv        ubar        dvar         gl" << endl;
+  //cout << "     mu2       x           uv         dv        ubar        dbar         gl" << endl;
   cout << setprecision(4) << scientific;
 
   // loop to interpolate all pdf's at different scales of q^2
-  for(int iq2 = 0; iq2 < nq2; iq2++) 
+  for(int iq2 = 0; iq2 < n_q2; iq2++) 
   {
     double q2_value = q2[iq2]; 
     cout << "q2_value = " << q2_value <<endl;
 
     // to save the output in a file saved in the output file
     ofstream myfile;
-    myfile.open("/opt/qcdnum-17-01-14/output/pruebaCxx_q_" + to_string(q2_value) +  ".csv");
+    myfile.open("/opt/qcdnum-17-01-14/output/pruebaCxx_q2_" + to_string(q2_value) +  ".csv");
     myfile << "x xuv xdv xubar xdbar xgl" << endl;
 
-    for(int ix = 0; ix < nx; ix++) {
+    for(int ix = 0; ix < nx-1; ix++) {
       double x_value  = x[ix];
+      //cout << x_value << endl;
       double uv = QCDNUM::fvalxq(pdfset_type,2,x_value,q2_value,ichk);     // the indexes are according the convention given in page 53 of the qcdnum manual
       double dv = QCDNUM::fvalxq(pdfset_type,1,x_value,q2_value,ichk);     
       double ubar = QCDNUM::fvalxq(pdfset_type,-2,x_value,q2_value,ichk);  
