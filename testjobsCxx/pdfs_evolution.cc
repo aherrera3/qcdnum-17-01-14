@@ -120,7 +120,7 @@ int main()
   }
   
   // q^2 array
-  static const double q2i = 0.5, q2f = 11.1, delta_q2 = 0.3;
+  static const double q2i = 0.5, q2f = 20, delta_q2 = 0.1;
   static const int n_q2 =  int((q2f-q2i)/delta_q2 +0.5);
   cout << "n_q2= " <<  n_q2 << endl;
   double q2[n_q2];
@@ -218,20 +218,20 @@ int main()
     double q2_value = q2[iq2]; 
     cout << "q2_value = " << q2_value <<endl;
 
-    // to save the output in a file saved in the output file
+    // to save the output
     ofstream myfile;
     myfile.open("/opt/qcdnum-17-01-14/output/pruebaCxx_q2_" + to_string(q2_value) +  ".csv");
     myfile << "x xuv xdv xubar xdbar xgl" << endl;
 
     for(int ix = 0; ix < nx-1; ix++) {
       double x_value  = x[ix];
-      //cout << x_value << endl;
       double uv = QCDNUM::fvalxq(pdfset_type,2,x_value,q2_value,ichk);     // the indexes are according the convention given in page 53 of the qcdnum manual
       double dv = QCDNUM::fvalxq(pdfset_type,1,x_value,q2_value,ichk);     
       double ubar = QCDNUM::fvalxq(pdfset_type,-2,x_value,q2_value,ichk);  
       double dbar = QCDNUM::fvalxq(pdfset_type,-1,x_value,q2_value,ichk);  
       double gl = QCDNUM::fvalxq(pdfset_type,0,x_value,q2_value,ichk);    
-      // the above is the same as QCDNUM::allfxq(pdfset_type,x_value,q_value,pdf,0,ichk); and printing : pdf[4] << " " << pdf[5]  << " " << pdf[6]  << " " << pdf[7] << " " << pdf[8]
+      // the above is the same as 
+      // QCDNUM::allfxq(pdfset_type,x_value,q_value,pdf,0,ichk); and printing : pdf[4] << " " << pdf[5]  << " " << pdf[6]  << " " << pdf[7] << " " << pdf[8]
       
       myfile << x_value << " " << uv << " " << dv << " " << ubar << " " << dbar << " " << gl << endl;
     } 
