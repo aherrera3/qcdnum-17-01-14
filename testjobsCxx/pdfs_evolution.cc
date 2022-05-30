@@ -120,7 +120,7 @@ int main()
   }
   
   // q^2 array
-  static const double q2i = 0.5, q2f = 10, delta_q2 = 0.07;
+  static const double q2i = 0.5, q2f = 20, delta_q2 = 0.1;
   static const int n_q2 =  int((q2f-q2i)/delta_q2 +0.5);
   cout << "n_q2= " <<  n_q2 << endl;
   double q2[n_q2];
