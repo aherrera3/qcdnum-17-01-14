@@ -52,13 +52,13 @@ double xubar(double x)
   return pd;
 }
 //----------------------------------------------------------------------
-//double xsbar(double x)
-//{
-//  double f_s = 0.4;
-//  double gamma_s = f_s / (1 - f_s);
-//  double pd = gamma_s * xdbar(x);
-//  return pd;
-//}
+double xsbar(double x)
+{
+  double f_s = 0.4;
+  double gamma_s = f_s / (1 - f_s);
+  double pd = gamma_s * xdbar(x);
+  return pd;
+}
 
 //----------------------------------------------------------------------
 /*
@@ -82,7 +82,7 @@ double func(int *ipdf, double *x)
   if (i == 5)
     f = xubar(xb);
   if (i == 6)
-    f = 0;//xsbar(xb);
+    f = xsbar(xb);
   if (i == 7)
     f = 0;        // charm
   if (i == 8)
@@ -130,7 +130,7 @@ int main()
 
   // size of x and y arrays, and min(x)
   int nx = size(x);
-  double q20 = 2.56, q2max = q2[n_q2 - 1];    // initial and final boundaries of q^2 qcdnum grid
+  double q20 = 0.5, q2max = q2[n_q2 - 1];    // initial and final boundaries of q^2 qcdnum grid
   cout << to_string(q2max) << endl;
 
   // to delete the old .csv files
@@ -178,7 +178,7 @@ int main()
   double as0 = 0.118, r20 = 2.0, eps;    // as0:starting value of strong interaction constant and r20: starting value of renormalization scale
 
   // threshold for the heavy quarks (charm, bottom and top quarks respectively).
-  double q2ch = 4.50, q2bt = 7.50, q2tp = 173.0;   
+  double q2ch = 2.13, q2bt = 4.50, q2tp = 173.0;   
 
   // pdf array declaration: In this array the pdfs will be stored.
   double pdf[13];
