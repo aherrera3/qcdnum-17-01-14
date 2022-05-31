@@ -211,9 +211,13 @@ int main()
   cout << setprecision(4) << scientific;
 
   // loop to interpolate all pdf's at different scales of q^2
-  for(int iq2 = 0; iq2 < n_q2; iq2++) 
+  for(int iq2 = -1; iq2 < n_q2; iq2++) 
   {
-    double q2_value = q2[iq2]; 
+    double q2_value;
+
+    if (iq2 != -1) q2_value = q2[iq2];
+    else q2_value = 0; 
+
     cout << "q2_value = " << q2_value <<endl;
 
     // to save the output
@@ -221,18 +225,24 @@ int main()
     myfile.open("/opt/qcdnum-17-01-14/output/pruebaCxx_q2_" + to_string(q2_value) +  ".csv");
     myfile << "x xuv xdv xubar xdbar xgl" << endl;
 
+    
     for(int ix = 0; ix < nx-1; ix++) {
       double x_value  = x[ix];
-      double uv = QCDNUM::fvalxq(pdfset_type,2,x_value,q2_value,ichk);     // the indexes are according the convention given in page 53 of the qcdnum manual
-      double dv = QCDNUM::fvalxq(pdfset_type,1,x_value,q2_value,ichk);     
-      double ubar = QCDNUM::fvalxq(pdfset_type,-2,x_value,q2_value,ichk);  
-      double dbar = QCDNUM::fvalxq(pdfset_type,-1,x_value,q2_value,ichk);  
-      double gl = QCDNUM::fvalxq(pdfset_type,0,x_value,q2_value,ichk);    
-      // the above is the same as 
-      // QCDNUM::allfxq(pdfset_type,x_value,q_value,pdf,0,ichk); and printing : pdf[4] << " " << pdf[5]  << " " << pdf[6]  << " " << pdf[7] << " " << pdf[8]
-      
+      double uv = 0, dv = 0, ubar = 0, dbar = 0, gl = 0;
+
+      if (iq2 != -1){
+        double uv = QCDNUM::fvalxq(pdfset_type,2,x_value,q2_value,ichk);     // the indexes are according the convention given in page 53 of the qcdnum manual
+        double dv = QCDNUM::fvalxq(pdfset_type,1,x_value,q2_value,ichk);     
+        double ubar = QCDNUM::fvalxq(pdfset_type,-2,x_value,q2_value,ichk);  
+        double dbar = QCDNUM::fvalxq(pdfset_type,-1,x_value,q2_value,ichk);  
+        double gl = QCDNUM::fvalxq(pdfset_type,0,x_value,q2_value,ichk);    
+        // the above is the same as 
+        // QCDNUM::allfxq(pdfset_type,x_value,q_value,pdf,0,ichk); and printing : pdf[4] << " " << pdf[5]  << " " << pdf[6]  << " " << pdf[7] << " " << pdf[8]
+      }
+
       myfile << x_value << " " << uv << " " << dv << " " << ubar << " " << dbar << " " << gl << endl;
-    } 
+    }
+
     myfile.close();
   }                
 
