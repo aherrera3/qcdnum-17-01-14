@@ -134,7 +134,7 @@ int main()
   cout << to_string(q2max) << endl;
 
   // to delete the old .csv files
-  //system("rm /opt/qcdnum-17-01-14/output/" + to_string(q2max) +  "/*.csv");
+  system("rm /opt/qcdnum-17-01-14/output/*.csv");
 
   // Quarks flavour composition: is an input for evolfg:
   double pdf_flavour[] =
