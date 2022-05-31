@@ -100,8 +100,6 @@ double func(int *ipdf, double *x)
 
 int main()
 {
-  // to delete the old .csv files
-  system("rm /opt/qcdnum-17-01-14/output/*.csv");
 
   // unpolarized pdfset, NNLO, VFNS
   int pdfset_type = 1, iord = 3, nfix = 0;
@@ -120,7 +118,7 @@ int main()
   }
   
   // q^2 array
-  static const double q2i = 0.5, q2f = 16, delta_q2 = 0.01;
+  static const double q2i = 0.5, q2f = 16, delta_q2 = 0.1;
   static const int n_q2 =  int((q2f-q2i)/delta_q2 +0.5);
   cout << "n_q2= " <<  n_q2 << endl;
   double q2[n_q2];
@@ -130,13 +128,13 @@ int main()
     //cout << q2[i] << endl;
   }
 
-  //double q2[] = {2.56, 5, 10, 100, 140, 170, 1e3, 5e3, 7e3,
-  //               1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10,// 1e11, 1e12};
-
-
   // size of x and y arrays, and min(x)
   int nx = size(x);
   double q20 = 0.5, q2max = q2[n_q2 - 1];    // initial and final boundaries of q^2 qcdnum grid
+  cout << to_string(q2max) << endl;
+
+  // to delete the old .csv files
+  //system("rm /opt/qcdnum-17-01-14/output/" + to_string(q2max) +  "/*.csv");
 
   // Quarks flavour composition: is an input for evolfg:
   double pdf_flavour[] =
